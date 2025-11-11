@@ -1,0 +1,21 @@
+1. Looking at the backtrace output, which function called syscall?
+    - syscall() được gọi bởi hàm: usertrap()
+
+2. What is the value of p->trapframe->a7 and what does that value represent?
+    - p->trapframe->a7 = 7
+    - Đây là syscall number, định nghĩa trong kernel/syscall.h
+
+3. What was the previous CPU mode (user or supervisor) — từ $sstatus.
+    - sstatus = 0x200000022
+    - User mode (SPP = 0 in sstatus).
+
+4. (Panic exercise) If you cause kernel panic by dereferencing 0 in syscall, find the assembly instruction kernel panics at and which register corresponds to variable num.
+
+    - kernel bị panics do cố gắng truy cập vào địa chỉ 0x0 (invalid memory access).
+    - sepc = 0x0000000080002a6c
+    - assembly instruction ở địa chỉ đó là: 0x80002a6c <syscall+12>: lw a5,0(a5)
+    - Thanh ghi tương ứng với biến 'num' là: a5
+
+5. Which binary name and PID was running when kernel panicked?     
+    - name = "initcode"
+    - pid  = 1

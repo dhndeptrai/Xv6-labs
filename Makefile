@@ -199,8 +199,7 @@ UPROGS=\
 	$U/_xargs\
 	$U/_trace\
 	$U/_find\
-
-
+	$U/_sysinfotest\
 
 
 ifeq ($(LAB),syscall)

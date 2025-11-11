@@ -20,19 +20,11 @@ main(int argc, char *argv[])
     exit(1);
   }
   
-  // Chuẩn bị các đối số cho lệnh exec()
-  // argv[0] là "trace"
-  // argv[1] là MASK
-  // argv[2] là COMMAND (ví dụ: "grep")
-  // argv[3]... là các đối số của COMMAND (ví dụ: "hello", "README")
-
-  // nargv sẽ là ["grep", "hello", "README", 0]
   for(i = 2; i < argc && i < MAXARG; i++){
     nargv[i-2] = argv[i];
   }
   nargv[i-2] = 0; // Đánh dấu kết thúc mảng đối số
 
-  // Chạy chương trình con
   exec(nargv[0], nargv);
   
   // exec chỉ trả về nếu có lỗi
