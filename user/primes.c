@@ -6,15 +6,12 @@ void primes(int left_fd) __attribute__((noreturn));
 
 void primes(int left_fd) {
   int p;
-
   // Đọc số đầu tiên từ pipe bên trái -> đây là prime tiếp theo
   if (read(left_fd, &p, sizeof(p)) == 0) {
     // Nếu không còn dữ liệu (EOF), đóng fd và thoát
     close(left_fd);
     exit(0);
   }
-
-  // In prime ra (ghi trực tiếp vào fd=1)
   // Dùng fprintf(1, ...) giảm nguy cơ dữ liệu bị trộn do nhiều process ghi cùng stdout.
   fprintf(1, "prime %d\n", p);
 

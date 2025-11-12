@@ -1,43 +1,70 @@
+// user/xargs.c
 #include "kernel/types.h"
-#include "kernel/param.h"
 #include "user/user.h"
+
+#define MAXARG 32
+#define MAXLINE 128
 
 int
 main(int argc, char *argv[])
 {
-  // argv[1..] chứa lệnh cần chạy (ví dụ: "echo bye")
-  // stdin chứa các dòng sẽ thêm vào lệnh
+    int cmd_start = 1;  // vị trí bắt đầu command trong argv
 
-  char buf[512]; // bộ đệm đọc dòng
-  char *args[MAXARG]; // mảng chứa đối số khi gọi exec
-  int n = 0; // chỉ số đối số
-  int i = 0; // index trong buffer
-  char c;
-
-  // Copy các đối số ban đầu vào args
-  for (int j = 1; j < argc; j++) {
-    args[n++] = argv[j];
-  }
-
-  // Đọc stdin từng ký tự
-  while (read(0, &c, 1) == 1) {
-    if (c == '\n') {
-      buf[i] = '\0'; // kết thúc chuỗi
-      args[n] = buf; // thêm dòng đọc được vào args
-      args[n+1] = 0; // kết thúc mảng argv bằng NULL
-
-      if (fork() == 0) {
-        exec(argv[1], args); // chạy command
-        exit(1); // chỉ chạy khi exec lỗi
-      } else {
-        wait(0); // đợi child xong
-      }
-
-      i = 0; // reset bộ đệm
-    } else {
-      buf[i++] = c;
+    // Xử lý option -n 1 (bỏ qua)
+    if (argc >= 4 && strcmp(argv[1], "-n") == 0 && strcmp(argv[2], "1") == 0) {
+        cmd_start = 3;
     }
-  }
 
-  exit(0);
+    if (argc <= cmd_start) {
+        fprintf(2, "Usage: xargs [-n 1] command [args...]\n");
+        exit(1);
+    }
+
+    int base_argc = argc - cmd_start;
+    char *cmd_argv[MAXARG];
+    for (int i = 0; i < base_argc; i++) {
+        cmd_argv[i] = argv[cmd_start + i];
+    }
+
+    char line[MAXLINE];
+    while (1) {
+        int i = 0;
+        // Đọc một dòng từ stdin
+        while (i < MAXLINE - 1) {
+            int n = read(0, &line[i], 1);
+            if (n < 1)
+                break; // EOF hoặc lỗi
+            if (line[i] == '\n')
+                break;
+            i++;
+        }
+        if (i == 0)
+            break; // không còn dòng nào
+
+        line[i] = 0; // kết thúc chuỗi
+
+        int total_argc = base_argc + 1;
+        if (total_argc >= MAXARG) {
+            fprintf(2, "Too many arguments\n");
+            exit(1);
+        }
+
+        cmd_argv[base_argc] = line;
+        cmd_argv[total_argc] = 0;
+
+        int pid = fork();
+        if (pid < 0) {
+            fprintf(2, "fork failed\n");
+            exit(1);
+        } else if (pid == 0) {
+            // child process
+            exec(cmd_argv[0], cmd_argv);
+            fprintf(2, "exec failed\n");
+            exit(1);
+        } else {
+            // parent process đợi child kết thúc
+            wait(0);
+        }
+    }
+    exit(0);
 }
